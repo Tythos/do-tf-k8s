@@ -18,5 +18,5 @@ variable "DO_REGION" {
 variable "DO_K8SSLUG" {
   type        = string
   description = "Slug indicating k8s version to deploy (see https://slugs.do-api.dev/)"
-  default     = "1.25.12-do.0"
+  default     = "1.28.2-do.0"
 }
