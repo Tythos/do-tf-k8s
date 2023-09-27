@@ -9,6 +9,11 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
     }
+
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -17,9 +22,15 @@ provider "digitalocean" {
 }
 
 provider "kubernetes" {
-  host  = digitalocean_kubernetes_cluster.example_cluster.endpoint
-  token = digitalocean_kubernetes_cluster.example_cluster.kube_config[0].token
-  cluster_ca_certificate = base64decode(
-    digitalocean_kubernetes_cluster.example_cluster.kube_config[0].cluster_ca_certificate
-  )
+  host                   = digitalocean_kubernetes_cluster.default.endpoint
+  token                  = digitalocean_kubernetes_cluster.default.kube_config[0].token
+  cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.default.kube_config[0].cluster_ca_certificate)
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = digitalocean_kubernetes_cluster.default.endpoint
+    token                  = digitalocean_kubernetes_cluster.default.kube_config[0].token
+    cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.default.kube_config[0].cluster_ca_certificate)
+  }
 }

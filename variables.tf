@@ -1,6 +1,7 @@
 variable "DO_TOKEN" {
   type        = string
   description = "DigitalOcean API token, required and passed through environmental variable TF_VAR_DO_TOKEN"
+  sensitive   = true
 }
 
 variable "DO_PROJECT" {
