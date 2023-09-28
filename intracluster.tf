@@ -1,75 +1,110 @@
-# resource "kubernetes_namespace" "ingress_ns" {
-#   metadata {
-#     name = "ingress-namespace"
-#   }
-# }
+resource "kubernetes_manifest" "nginx_ingress_class" {
+  manifest = {
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "IngressClass"
 
-# resource "kubernetes_deployment" "nginx" {
-#   metadata {
-#     name = "nginx-deployment"
-#     labels = {
-#       app = "nginx"
-#     }
-#   }
+    metadata = {
+      name = "nginx"
+    }
 
-#   spec {
-#     replicas = 1
+    spec = {
+      controller = "k8s.io/ingress-nginx/controller"
+    }
+  }
+}
 
-#     selector {
-#       match_labels = {
-#         app = "nginx"
-#       }
-#     }
+resource "kubernetes_ingress_v1" "my_ingress" {
+  metadata {
+    name = "my-ingress"
+  }
 
-#     template {
-#       metadata {
-#         labels = {
-#           app = "nginx"
-#         }
-#       }
+  spec {
+    ingress_class_name = "nginx"
 
-#       spec {
-#         container {
-#           name  = "nginx"
-#           image = "nginx:latest"
+    rule {
+      host = "tythoscreatives.com"
 
-#           port {
-#             container_port = 80
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
 
-# resource "kubernetes_ingress_v1" "nginx" {
-#   metadata {
-#     name      = "nginx-ingress"
-#     namespace = "default"
-#     annotations = {
-#       "kubernetes.io/ingress.class" = "nginx"
-#     }
-#   }
+          backend {
+            service {
+              name = kubernetes_service.my_web_app_service.metadata[0].name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-#   spec {
-#     rule {
-#       host = "nginx.tythoscreatives.com"
+resource "kubernetes_service" "my_web_app_service" {
+  metadata {
+    name = "my-web-app-service"
+  }
 
-#       http {
-#         path {
-#           path      = "/"
-#           path_type = "Prefix"
+  spec {
+    type = "LoadBalancer"
 
-#           backend {
-#             service {
-#               name = "nginx-deployment"
-#               port {
-#                 number = 80
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+    selector = {
+      app = "my-web-app"
+    }
+
+    port {
+      port        = 80
+      target_port = 80
+    }
+  }
+}
+
+resource "kubernetes_persistent_volume_claim" "my_pvc" {
+  metadata {
+    name = "my-pvc"
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+  }
+}
+
+resource "kubernetes_deployment" "my_web_app" {
+  metadata {
+    name = "my-web-app"
+  }
+
+  spec {
+    replicas = 2
+
+    selector {
+      match_labels = {
+        app = "my-web-app"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "my-web-app"
+        }
+      }
+
+      spec {
+        container {
+          image = "nginx:latest"
+          name  = "web"
+        }
+      }
+    }
+  }
+}
